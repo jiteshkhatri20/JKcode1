@@ -1,2 +1,1 @@
-New remote file added to the central repo
-Edited to use the GIT PULL COmmand
+remote2 file edited again.
