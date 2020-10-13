@@ -1,0 +1,41 @@
+// Makes API call to worldtimezone/api/timezone, and gets the time of the
+// first 3 timezones and pretty formats it
+function myVirtualHandler (request, session, config) {
+
+    //Make api call to upstream target
+    newRequest = {
+      "Method": "GET",
+      "Domain": "http://worldtimeapi.org",
+      "resource": "/api/timezone"
+    };
+    timezonesResponse = TykMakeHttpRequest(JSON.stringify(newRequest));
+    usableResponse = JSON.parse(timezonesResponse);
+    var timezones = JSON.parse(usableResponse.Body);
+      
+    var requests = {requests: timezones.slice(0, 3).map(function(tzString) {
+      return {
+        "method": "GET",
+        "headers": {},
+        "body": "",
+        "relative_url": "http://worldtimeapi.org/api/timezone/" + tzString
+      };
+    }), suppress_parallel_execution: false};
+    
+     var newBody = TykBatchRequest(JSON.stringify(requests))
+      
+    // We know that the requests return JSON in their body, lets flatten it
+    var asJS = JSON.parse(newBody)
+    var bodyResponse = "";
+    for (var i in asJS) {
+        var bodyPiece = JSON.parse(asJS[i].body)
+        bodyResponse += bodyPiece.abbreviation + " - " + bodyPiece.utc_datetime + "\n"
+    }
+      
+    // Set up a response object
+    var response = {
+      Body: bodyResponse,
+      Code: 200
+    }
+      
+    return TykJsResponse(response, session.meta_data)
+  }
